@@ -14,8 +14,8 @@ The finished build fits inside an original Rumble Pak* and runs from 2xAA batter
 
 - NUS-005 N64 controller
 - NUS-013 N64 Rumble Pak
-- 3.3v / 16mhz Arduino (link)
-- RN42 I/RN Bluetooth module (link)
+- [3.3v / 16mhz Arduino](https://www.keyestudio.com/-p0485.html)
+- [RN42 I/RM Bluetooth module](https://uk.farnell.com/microchip/rn42-i-rm/module-bluetooth-class-2-w-ant/dp/2143310)
 - Soldering iron, solder, wire
 - Patience & steady hands..!
 
