@@ -1,5 +1,3 @@
-#include <Joystick.h>
-Joystick_ Joystick;
 /**
  * Gamecube controller to Nintendo 64 adapter
  * by Andrew Brown
@@ -31,6 +29,7 @@ int axis_x_max = 70;
 int axis_y_min = -70;
 int axis_y_max = 70;
 int axis_x_val, axis_y_val;
+char axis_x, axis_y;
 
 #define N64_PIN 2 // Arduino pin to receive controller data
 #define N64_PIN_REGISTER 0x02 // Important: hardware address for the pin
@@ -63,9 +62,8 @@ void translate_raw_data();
 
 void setup()
 {
-  Joystick.begin(0);
   Serial.begin(115200);
-  bluetooth.begin(57600);  // The Bluetooth Mate defaults to 115200bps but I set it to 57.6k
+  bluetooth.begin(57600);  // The RN42 defaults to 115200bps but I set it to 57.6k
 
   // Communication with gamecube controller on this pin
   // Don't remove these lines, we don't want to push +5V to the controller
@@ -310,14 +308,14 @@ read_loop:
  * Write the controller status out through SoftwareSerial for the RN42
  * https://stackoverflow.com/questions/27661297/hid-reports-scan-codes-for-rn-42-hids-gamepad-profile/28528348
  */
-void sendGamepadState(uint8_t btnState1, uint8_t btnState2, int8_t x1, int8_t y1)
+void sendGamepadState(uint8_t btnState1, uint8_t btnState2, int x1, int y1)
 {
   bluetooth.write((byte)0xFD);    // Start HID Report
   bluetooth.write((byte)0x6);     // Length byte
   
   // 1st X/Y-Axis
-  bluetooth.write(x1);            // First X coordinate
-  bluetooth.write(y1);            // First Y coordinate
+  bluetooth.write((uint8_t) x1);  // First X coordinate
+  bluetooth.write((uint8_t) y1);  // First Y coordinate
   
   // 2nd X/Y-Axis; write null because we don't use a second joystick
   bluetooth.write((uint8_t)0x00); //Second X coordinate
@@ -405,65 +403,59 @@ void loop()
       N64_status.data2 &= ~(1UL << 5);
     }
 
-    /*
-    // Joystick
-    axis_x_val = (int) (N64_status.stick_x, DEC);
-    axis_y_val = (int) (N64_status.stick_y, DEC);
+    // Joystick range calibration
+    axis_x_val = (int) N64_status.stick_x;
+    axis_y_val = (int) N64_status.stick_y;
 
-    // Track the x/y axis to find its min/max values for auto calibration
-    if (axis_x_val > 0 && axis_x_val > axis_x_max) {
-      axis_x_max = axis_x_val;
-    } else if (axis_x_val < 0 && axis_x_val < axis_x_min) {
+    if(axis_x_val < axis_x_min){
       axis_x_min = axis_x_val;
     }
-    */
-    /*
     if(axis_x_val > axis_x_max){
       axis_x_max = axis_x_val;
+    }
+    
+    if(axis_y_val > axis_y_max){
+      axis_y_max = axis_y_val;
     }
     if(axis_y_val < axis_y_min){
       axis_y_min = axis_y_val;
     }
-    if(axis_y_val > axis_y_max){
-      axis_y_max = axis_y_val;
-    }
-    */
 
-    // Rewrite the axis to a % of 127
-    //int axis_x = map(axis_x_val, axis_x_min, axis_x_max, 0, 256);
-    //int axis_y = map(axis_y_val, axis_y_min, axis_y_max, 0, 256);
-    int axis_x = map(axis_x_val, -80, 85, -127, 127);
-    int axis_y = map(axis_y_val, -80, 85, -127, 127);
+    // Positive and negative range may not be even
+    if(axis_x_val < 0){
+      axis_x = map(axis_x_val, axis_x_min, -1, -127, -1);
+    } else {
+      axis_x = map(axis_x_val, 0, axis_x_max, 0, 127);
+    }
+    
+    if(axis_y_val < 0){
+      axis_y = map(axis_y_val, axis_y_min, -1, -127, -1);
+    } else {
+      axis_y = map(axis_y_val, 0, axis_y_max, 0, 127);
+    }
 
     // Write the status out
     sendGamepadState(N64_status.data1, N64_status.data2, axis_x, axis_y * -1);
 
-    Joystick.setXAxis(N64_status.stick_x);
-    Joystick.setYAxis(N64_status.stick_y * -1);
-    Joystick.sendState();
-
+    /*
     // DEBUG
     Serial.println();
+    
+    Serial.print("Axis X min/value/max ");
     Serial.print(axis_x_min);
-    Serial.print(" ");
-    Serial.print(N64_status.stick_x, DEC);
-    Serial.print(":");
-    Serial.print(axis_x_val);
-    Serial.print(":");
+    Serial.print("/");
     Serial.print(axis_x);
-    Serial.print(" ");
+    Serial.print("/");
     Serial.println(axis_x_max);
     
+    Serial.print("Axis Y min/value/max: ");
     Serial.print(axis_y_min);
-    Serial.print(" ");
-    Serial.print(N64_status.stick_y, DEC);
-    Serial.print(":");
-    Serial.print(axis_y_val);
-    Serial.print(":");
+    Serial.print("/");
     Serial.print(axis_y);
-    Serial.print(" ");
+    Serial.print("/");
     Serial.println(axis_y_max);
     print_N64_status();
+    */
     
     delay(25);
 }
