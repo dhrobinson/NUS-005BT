@@ -49,9 +49,9 @@ PWR --------------- Expansion pin 31
 
 Rumble pak / Arduino
 ```
-ARDUINO             RUMBLE PAK
+RUMBLE PAK             ARDUINO
 
-PWR ---------------------- RAW
+P20 ---------------------- RAW
 GND ---------------------- GND
 P25 -------(data)--------- P02
 
